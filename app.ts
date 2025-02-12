@@ -1,6 +1,5 @@
 import OpenAI from 'openai';
 import express, { Request, Response, NextFunction } from 'express';
-import path from 'path';
 import multer from 'multer';
 import cors from 'cors';
 import fs from 'fs/promises';
@@ -11,13 +10,8 @@ import sanitizeHtml from 'sanitize-html';
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
-// Ensure uploads directory exists and is not publicly accessible
-app.use('/uploads', (req: Request, res: Response) => {
-  res.status(403).send('Forbidden');
-});
-
+// Initialize OpenAI client
 const client = new OpenAI({
   baseURL: "http://127.0.0.1:1234/v1",
   apiKey: "not-needed"
@@ -27,14 +21,12 @@ const client = new OpenAI({
 const storage = multer.diskStorage({
   destination: 'uploads/',
   filename: (req, file, cb) => {
-    // Generate random filename
     const randomName = crypto.randomBytes(16).toString('hex');
     cb(null, `${randomName}.pdf`);
   }
 });
 
 const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Check file type
   if (file.mimetype !== 'application/pdf') {
     cb(new Error('Only PDF files are allowed'));
     return;
@@ -58,18 +50,6 @@ interface UploadedDocument extends Express.Multer.File {
 
 const uploadedDocuments: UploadedDocument[] = [];
 
-// Helper function to clean up old files
-async function cleanupOldFiles(): Promise<void> {
-  for (const doc of uploadedDocuments) {
-    try {
-      await fs.unlink(doc.path);
-    } catch (error) {
-      console.error('Error deleting file:', doc.filename);
-    }
-  }
-  uploadedDocuments.length = 0;
-}
-
 // Cleanup old files periodically (every hour)
 setInterval(async () => {
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -86,6 +66,12 @@ setInterval(async () => {
     }
   }
 }, 60 * 60 * 1000);
+
+// Serve static files but block access to uploads directory
+app.use('/uploads', (req: Request, res: Response) => {
+  res.status(403).send('Forbidden');
+});
+app.use(express.static('public'));
 
 // Error handling middleware
 const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction): void => {
@@ -112,9 +98,6 @@ app.post('/upload', upload.single('document'), async (req: Request, res: Respons
   }
 
   try {
-    // Clean up old files
-    await cleanupOldFiles();
-    
     // Add metadata to the uploaded file
     const docWithMetadata: UploadedDocument = {
       ...(req.file as Express.Multer.File),
@@ -173,6 +156,11 @@ app.post('/chat', async (req: Request, res: Response): Promise<void> => {
   // Validate input
   if (!message || typeof message !== 'string') {
     res.status(400).json({ message: 'Invalid message format.' });
+    return;
+  }
+
+  if (uploadedDocuments.length === 0) {
+    res.status(400).json({ message: 'Please upload a document first.' });
     return;
   }
 

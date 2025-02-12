@@ -5,6 +5,30 @@ const messages = document.getElementById('messages');
 const uploadMessage = document.querySelector('.upload-message');
 const uploadedFiles = document.querySelector('.uploaded-files');
 const clearChatButton = document.getElementById('clearChat');
+const fileInput = uploadForm.querySelector('input[type="file"]');
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+
+// Add file size validation
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    if (file.size > MAX_FILE_SIZE) {
+      uploadMessage.textContent = 'File is too large. Maximum size is 5MB.';
+      uploadMessage.style.color = '#e53e3e';
+      fileInput.value = ''; // Clear the file input
+      return;
+    }
+    if (!file.type.includes('pdf')) {
+      uploadMessage.textContent = 'Only PDF files are allowed.';
+      uploadMessage.style.color = '#e53e3e';
+      fileInput.value = ''; // Clear the file input
+      return;
+    }
+    uploadMessage.textContent = 'File selected. Click Upload to proceed.';
+    uploadMessage.style.color = '#718096';
+  }
+});
 
 let currentDocumentId = null;
 

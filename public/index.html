@@ -15,7 +15,10 @@
       <h2>Step 1: Upload your PDF</h2>
       <form id="uploadForm">
         <div class="upload-controls">
-          <input type="file" name="document" accept=".pdf" />
+          <div class="file-input-container">
+            <input type="file" name="document" accept=".pdf" />
+            <p class="file-limits">Maximum file size: 5MB, PDF files only</p>
+          </div>
           <button type="submit">Upload PDF</button>
         </div>
         <div class="uploaded-files"></div>
