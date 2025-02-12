@@ -6,15 +6,42 @@ const uploadMessage = document.querySelector('.upload-message');
 const uploadedFiles = document.querySelector('.uploaded-files');
 const clearChatButton = document.getElementById('clearChat');
 
+let currentDocumentId = null;
+
 // Add clear chat functionality
 clearChatButton.addEventListener('click', () => {
-  messages.innerHTML = ''; // Clear all messages
-  // Optional: Add a subtle animation when clearing
+  messages.innerHTML = '';
   messages.style.opacity = '0';
   setTimeout(() => {
     messages.style.opacity = '1';
   }, 300);
 });
+
+// Function to remove the current document
+async function removeDocument(fileId) {
+  try {
+    const response = await fetch(`/document/${fileId}`, { 
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      uploadedFiles.innerHTML = '';
+      uploadMessage.textContent = 'No document uploaded yet.';
+      uploadMessage.style.color = '#718096';
+      currentDocumentId = null;
+      
+      // Reset the file input
+      const fileInput = uploadForm.querySelector('input[type="file"]');
+      fileInput.value = '';
+    } else {
+      throw new Error('Failed to remove document');
+    }
+  } catch (error) {
+    console.error('Error removing document:', error);
+    uploadMessage.textContent = 'Failed to remove document. Please try again.';
+    uploadMessage.style.color = '#e53e3e';
+  }
+}
 
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -32,15 +59,22 @@ uploadForm.addEventListener('submit', async (e) => {
     
     if (response.ok) {
       uploadMessage.textContent = 'Document uploaded successfully!';
-      uploadMessage.style.color = '#48bb78'; // Success green color
+      uploadMessage.style.color = '#48bb78';
+      currentDocumentId = result.file.id;
       
-      // Show the uploaded file name
+      // Show the uploaded file name with remove button
       uploadedFiles.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14 4.5V14C14 14.5523 13.5523 15 13 15H3C2.44772 15 2 14.5523 2 14V2C2 1.44772 2.44772 1 3 1H10.5L14 4.5Z" stroke="#4A5568" stroke-width="2"/>
-          </svg>
-          <span>${file.name}</span>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: #f7fafc; border-radius: 6px;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 4.5V14C14 14.5523 13.5523 15 13 15H3C2.44772 15 2 14.5523 2 14V2C2 1.44772 2.44772 1 3 1H10.5L14 4.5Z" stroke="#4A5568" stroke-width="2"/>
+            </svg>
+            <span>${result.file.name}</span>
+          </div>
+          <button type="button" onclick="removeDocument('${result.file.id}')" 
+                  style="padding: 0.25rem 0.5rem; background: #fed7d7; color: #c53030; border-radius: 4px;">
+            Remove
+          </button>
         </div>
       `;
     } else {
@@ -49,7 +83,7 @@ uploadForm.addEventListener('submit', async (e) => {
   } catch (error) {
     console.error('Error uploading document:', error);
     uploadMessage.textContent = 'Failed to upload document. Please try again.';
-    uploadMessage.style.color = '#e53e3e'; // Error red color
+    uploadMessage.style.color = '#e53e3e';
   }
 });
 

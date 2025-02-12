@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import path from 'path';
 import multer from 'multer';
-import { Request } from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
 import pdfParse from 'pdf-parse';
@@ -19,6 +18,18 @@ const client = new OpenAI({
 
 const upload = multer({ dest: 'uploads/' });
 const uploadedDocuments: Express.Multer.File[] = [];
+
+// Helper function to clean up old files
+async function cleanupOldFiles() {
+  for (const doc of uploadedDocuments) {
+    try {
+      await fs.unlink(doc.path);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  }
+  uploadedDocuments.length = 0;
+}
 
 async function testLLMStudio() {
   try {
@@ -40,14 +51,50 @@ async function testLLMStudio() {
 // Run the test
 testLLMStudio();
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/upload', upload.single('document'), (req: Request, res) => {
+app.post('/upload', upload.single('document'), async (req: Request, res: Response) => {
   console.log('Uploaded document:', (req as any).file);
+  
+  // Clean up old files
+  await cleanupOldFiles();
+  
+  // Add new document
   uploadedDocuments.push((req as any).file);
-  res.json({ message: 'Document uploaded successfully' });
+  
+  res.json({ 
+    message: 'Document uploaded successfully',
+    file: {
+      name: (req as any).file.originalname,
+      id: (req as any).file.filename
+    }
+  });
+});
+
+interface DeleteDocumentParams {
+  id: string;
+}
+
+app.delete<DeleteDocumentParams>('/document/:id', async (req: Request<DeleteDocumentParams>, res: Response): Promise<void> => {
+  const fileId = req.params.id;
+  const docIndex = uploadedDocuments.findIndex(doc => doc.filename === fileId);
+  
+  if (docIndex === -1) {
+    res.status(404).json({ message: 'Document not found' });
+    return;
+  }
+
+  try {
+    const doc = uploadedDocuments[docIndex];
+    await fs.unlink(doc.path);
+    uploadedDocuments.splice(docIndex, 1);
+    res.json({ message: 'Document removed successfully' });
+  } catch (error) {
+    console.error('Error removing document:', error);
+    res.status(500).json({ message: 'Error removing document' });
+  }
 });
 
 app.post('/chat', async (req, res) => {
