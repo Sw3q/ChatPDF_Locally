@@ -4,6 +4,17 @@ const sendButton = document.getElementById('sendButton');
 const messages = document.getElementById('messages');
 const uploadMessage = document.querySelector('.upload-message');
 const uploadedFiles = document.querySelector('.uploaded-files');
+const clearChatButton = document.getElementById('clearChat');
+
+// Add clear chat functionality
+clearChatButton.addEventListener('click', () => {
+  messages.innerHTML = ''; // Clear all messages
+  // Optional: Add a subtle animation when clearing
+  messages.style.opacity = '0';
+  setTimeout(() => {
+    messages.style.opacity = '1';
+  }, 300);
+});
 
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();

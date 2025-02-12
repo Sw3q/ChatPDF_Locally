@@ -99,6 +99,7 @@ input[type="file"]:hover {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #f8fafc;
+  transition: opacity 0.3s ease-out;
 }
 
 .input-container {
