@@ -1,21 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>LLM Studio UI</title>
+  <title>Chat with your PDF</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>LLM Studio UI</h1>
-  
-  <form id="uploadForm">
-    <input type="file" name="document" />
-    <button type="submit">Upload</button>
-  </form>
+  <header>
+    <h1>Chat with your PDF</h1>
+    <p>Upload a PDF document and ask questions about its content.</p>
+  </header>
 
-  <div id="chatInterface">
-    <div id="messages"></div>
-    <input type="text" id="userInput" placeholder="Type your message..." />
-    <button id="sendButton">Send</button>
-  </div>
+  <main>
+    <section class="upload-section">
+      <h2>Step 1: Upload your PDF</h2>
+      <form id="uploadForm">
+        <div class="upload-controls">
+          <input type="file" name="document" accept=".pdf" />
+          <button type="submit">Upload PDF</button>
+        </div>
+        <div class="uploaded-files"></div>
+      </form>
+      <p class="upload-message">No document uploaded yet.</p>
+    </section>
+
+    <section class="chat-section">
+      <h2>Step 2: Ask a question</h2>
+      <div id="chatInterface">
+        <div id="messages"></div>
+        <div class="input-container">
+          <input type="text" id="userInput" placeholder="Type your question here..." />
+          <button id="sendButton">Send</button>
+        </div>
+      </div>
+      <button id="clearChat">Clear Chat</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Powered by <a href="https://www.llmstudio.com/" target="_blank">LLM Studio</a></p>
+  </footer>
 
   <script src="app.js"></script>
 </body>
