@@ -191,16 +191,7 @@ app.post('/chat', async (req: Request, res: Response): Promise<void> => {
     const completion = await client.chat.completions.create({
       model: "local-model",
       messages: [
-        { 
-          role: "system", 
-          content: `You are a helpful assistant. You respond exclusively in the language of the user's message. Format your responses as HTML. Use appropriate HTML tags to structure the content in a readable way, for example:
-- Use <h1>, <h2> etc for headings 
-- Use <p> for paragraphs of text
-- Use <ul> and <li> for bullet point lists
-- Use <table>, <tr>, <th>, <td> for tabular data
-Respond to the user's message based on the content of the uploaded documents:\n\n${documentContents.join('\n\n').slice(0, 4000)}` 
-        },
-        { role: "user", content: sanitizedMessage }
+        { role: "user", content: `Based on these documents:\n\n${documentContents.join('\n\n').slice(0, 4000)}\n\nUser question: ${sanitizedMessage}` }
       ],
       temperature: 0.1,
     });
