@@ -15,12 +15,16 @@ body {
   flex-direction: column;
 }
 
-/* Header styles */
-header {
+/* Header and footer common styles */
+header, footer {
   background-color: #ffffff;
   padding: 2rem;
-  text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+footer {
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
@@ -85,14 +89,12 @@ input[type="file"]:hover {
   border-color: #2b6cb0;
 }
 
-.file-limits {
+.file-limits, .upload-message {
   font-size: 0.875rem;
   color: #718096;
-  margin: 0;
 }
 
 .upload-message {
-  color: #718096;
   font-style: italic;
 }
 
@@ -160,14 +162,7 @@ button:hover {
   background-color: #cbd5e0;
 }
 
-/* Footer styles */
-footer {
-  text-align: center;
-  padding: 2rem;
-  background-color: #ffffff;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
+/* Link styles */
 footer a {
   color: #2b6cb0;
   text-decoration: none;
@@ -183,6 +178,7 @@ footer a:hover {
   padding: 1rem;
   border-radius: 8px;
   max-width: 85%;
+  animation: slideIn 0.3s ease-out;
 }
 
 .user-message {
@@ -199,7 +195,7 @@ footer a:hover {
 
 /* Responsive design */
 @media (max-width: 600px) {
-  header {
+  header, footer {
     padding: 1rem;
   }
 
@@ -236,8 +232,4 @@ footer a:hover {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.message {
-  animation: slideIn 0.3s ease-out;
 } 

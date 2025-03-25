@@ -10,6 +10,7 @@ import sanitizeHtml from 'sanitize-html';
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // Initialize OpenAI client
 const client = new OpenAI({
@@ -26,17 +27,15 @@ const storage = multer.diskStorage({
   }
 });
 
-const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  if (file.mimetype !== 'application/pdf') {
-    cb(new Error('Only PDF files are allowed'));
-    return;
-  }
-  cb(null, true);
-};
-
 const upload = multer({
   storage,
-  fileFilter,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      cb(new Error('Only PDF files are allowed'));
+      return;
+    }
+    cb(null, true);
+  },
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1
@@ -67,14 +66,13 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000);
 
-// Serve static files but block access to uploads directory
+// Block access to uploads directory
 app.use('/uploads', (req: Request, res: Response) => {
   res.status(403).send('Forbidden');
 });
-app.use(express.static('public'));
 
 // Error handling middleware
-const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction): void => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction): void => {
   console.error('Error:', err.message);
   
   if (err instanceof multer.MulterError) {
@@ -87,9 +85,7 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
   }
   
   res.status(500).json({ message: 'Internal server error.' });
-};
-
-app.use(errorHandler);
+});
 
 app.post('/upload', upload.single('document'), async (req: Request, res: Response): Promise<void> => {
   if (!req.file) {
@@ -119,11 +115,7 @@ app.post('/upload', upload.single('document'), async (req: Request, res: Respons
   }
 });
 
-interface DeleteDocumentParams {
-  id: string;
-}
-
-app.delete('/document/:id', async (req: Request<DeleteDocumentParams>, res: Response): Promise<void> => {
+app.delete('/document/:id', async (req: Request, res: Response): Promise<void> => {
   const fileId = req.params.id;
   
   // Validate file ID format
@@ -164,17 +156,14 @@ app.post('/chat', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  // Sanitize input
-  const sanitizedMessage = sanitizeHtml(message, {
-    allowedTags: [],
-    allowedAttributes: {}
-  });
-
   try {
+    // Sanitize input
+    const sanitizedMessage = sanitizeHtml(message, { allowedTags: [], allowedAttributes: {} });
+    
+    // Process all uploaded documents
     const documentContents = await Promise.all(uploadedDocuments.map(async (doc) => {
-      const dataBuffer = await fs.readFile(doc.path);
-      
       try {
+        const dataBuffer = await fs.readFile(doc.path);
         const result = await pdfParse(dataBuffer);
         return result.text;
       } catch (err) {

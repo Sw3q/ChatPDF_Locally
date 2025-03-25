@@ -1,47 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat with your PDF</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Chat with your PDF</h1>
-    <p>Upload a PDF document and ask questions about its content.</p>
-    <img src="https://balguerie-group.com/wp-content/themes/yootheme/cache/05/balguerie-05b93a58.png" alt="Logo" class="logo">
+    <h1>Bill of Lading -> JSON</h1>
+    <p>Téléchargez votre BL en format PDF et obtenez une représentation JSON des données.</p>
   </header>
 
   <main>
     <section class="upload-section">
-      <h2>Step 1: Upload your PDF</h2>
+      <h2>Étape 1: Téléchargez votre BL</h2>
       <form id="uploadForm">
         <div class="upload-controls">
           <div class="file-input-container">
             <input type="file" name="document" accept=".pdf" />
-            <p class="file-limits">Maximum file size: 5MB, PDF files only</p>
+            <p class="file-limits">Taille maximale: 5MB, seulement PDF</p>
           </div>
-          <button type="submit">Upload PDF</button>
+          <button type="submit">Télécharger BL</button>
         </div>
         <div class="uploaded-files"></div>
       </form>
-      <p class="upload-message">No document uploaded yet.</p>
+      <p class="upload-message">Aucun document téléchargé pour le moment.</p>
     </section>
 
     <section class="chat-section">
-      <h2>Step 2: Ask a question</h2>
-      <div id="chatInterface">
-        <div id="messages"></div>
-        <div class="input-container">
-          <input type="text" id="userInput" placeholder="Type your question here..." />
-          <button id="sendButton">Send</button>
-        </div>
+      <h2>Étape 2: Posez une question</h2>
+      <div id="messages"></div>
+      <div class="input-container">
+        <input type="text" id="userInput" placeholder="Type your question here..." />
+        <button id="sendButton">Envoyer</button>
       </div>
-      <button id="clearChat">Clear Chat</button>
+      <button id="clearChat">Effacer le chat</button>
     </section>
   </main>
 
   <footer>
-    <p>Powered by <a href="https://www.llmstudio.com/" target="_blank">LLM Studio</a></p>
+    <p>Fait par Luc Guimberteau</p>
   </footer>
 
   <script src="app.js"></script>

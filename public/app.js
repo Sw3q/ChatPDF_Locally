@@ -8,72 +8,68 @@ const clearChatButton = document.getElementById('clearChat');
 const fileInput = uploadForm.querySelector('input[type="file"]');
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+let currentDocumentId = null;
 
 // Add file size validation
 fileInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
-  if (file) {
-    if (file.size > MAX_FILE_SIZE) {
-      uploadMessage.textContent = 'File is too large. Maximum size is 5MB.';
-      uploadMessage.style.color = '#e53e3e';
-      fileInput.value = ''; // Clear the file input
-      return;
-    }
-    if (!file.type.includes('pdf')) {
-      uploadMessage.textContent = 'Only PDF files are allowed.';
-      uploadMessage.style.color = '#e53e3e';
-      fileInput.value = ''; // Clear the file input
-      return;
-    }
-    uploadMessage.textContent = 'File selected. Click Upload to proceed.';
-    uploadMessage.style.color = '#718096';
+  if (!file) return;
+  
+  if (file.size > MAX_FILE_SIZE) {
+    showUploadMessage('File is too large. Maximum size is 5MB.', true);
+    fileInput.value = ''; // Clear the file input
+    return;
   }
+  
+  if (!file.type.includes('pdf')) {
+    showUploadMessage('Only PDF files are allowed.', true);
+    fileInput.value = ''; // Clear the file input
+    return;
+  }
+  
+  showUploadMessage('File selected. Click Upload to proceed.', false);
 });
 
-let currentDocumentId = null;
+// Helper function to show upload messages
+function showUploadMessage(text, isError = false) {
+  uploadMessage.textContent = text;
+  uploadMessage.style.color = isError ? '#e53e3e' : '#718096';
+}
 
 // Add clear chat functionality
 clearChatButton.addEventListener('click', () => {
   messages.innerHTML = '';
   messages.style.opacity = '0';
-  setTimeout(() => {
-    messages.style.opacity = '1';
-  }, 300);
+  setTimeout(() => messages.style.opacity = '1', 300);
 });
 
 // Function to remove the current document
 async function removeDocument(fileId) {
   try {
-    const response = await fetch(`/document/${fileId}`, { 
-      method: 'DELETE'
-    });
+    const response = await fetch(`/document/${fileId}`, { method: 'DELETE' });
     
     if (response.ok) {
       uploadedFiles.innerHTML = '';
-      uploadMessage.textContent = 'No document uploaded yet.';
-      uploadMessage.style.color = '#718096';
+      showUploadMessage('No document uploaded yet.');
       currentDocumentId = null;
-      
-      // Reset the file input
-      const fileInput = uploadForm.querySelector('input[type="file"]');
       fileInput.value = '';
     } else {
       throw new Error('Failed to remove document');
     }
   } catch (error) {
     console.error('Error removing document:', error);
-    uploadMessage.textContent = 'Failed to remove document. Please try again.';
-    uploadMessage.style.color = '#e53e3e';
+    showUploadMessage('Failed to remove document. Please try again.', true);
   }
 }
 
+// Handle form submission for document upload
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const formData = new FormData(uploadForm);
   const file = formData.get('document');
   
   if (!file || file.size === 0) {
-    uploadMessage.textContent = 'Please select a file first.';
+    showUploadMessage('Please select a file first.', true);
     return;
   }
 
@@ -82,8 +78,7 @@ uploadForm.addEventListener('submit', async (e) => {
     const result = await response.json();
     
     if (response.ok) {
-      uploadMessage.textContent = 'Document uploaded successfully!';
-      uploadMessage.style.color = '#48bb78';
+      showUploadMessage('Document uploaded successfully!', false);
       currentDocumentId = result.file.id;
       
       // Show the uploaded file name with remove button
@@ -106,22 +101,24 @@ uploadForm.addEventListener('submit', async (e) => {
     }
   } catch (error) {
     console.error('Error uploading document:', error);
-    uploadMessage.textContent = 'Failed to upload document. Please try again.';
-    uploadMessage.style.color = '#e53e3e';
+    showUploadMessage('Failed to upload document. Please try again.', true);
   }
 });
 
-sendButton.addEventListener('click', async () => {
-  const message = userInput.value;
-  if (!message.trim()) return;
+// Handle sending messages
+sendButton.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+async function sendMessage() {
+  const message = userInput.value.trim();
+  if (!message) return;
   
   userInput.value = '';
 
-  // Add user message with proper styling
-  const userMessageDiv = document.createElement('div');
-  userMessageDiv.className = 'message user-message';
-  userMessageDiv.textContent = message;
-  messages.appendChild(userMessageDiv);
+  // Add user message
+  addMessage(message, 'user-message');
 
   try {
     const response = await fetch('/chat', { 
@@ -132,19 +129,25 @@ sendButton.addEventListener('click', async () => {
 
     const result = await response.json();
     
-    // Add assistant message with proper styling
-    const assistantMessageDiv = document.createElement('div');
-    assistantMessageDiv.className = 'message assistant-message';
-    assistantMessageDiv.innerHTML = result.response;
-    messages.appendChild(assistantMessageDiv);
-
-    // Scroll to the bottom of the messages
-    messages.scrollTop = messages.scrollHeight;
+    // Add assistant message
+    addMessage(result.response, 'assistant-message', true);
   } catch (error) {
     console.error('Error sending message:', error);
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message assistant-message';
-    errorDiv.textContent = 'Sorry, there was an error processing your message. Please try again.';
-    messages.appendChild(errorDiv);
+    addMessage('Sorry, there was an error processing your message. Please try again.', 'assistant-message');
   }
-}); 
+}
+
+// Helper function to add messages to the chat
+function addMessage(content, className, isHTML = false) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${className}`;
+  
+  if (isHTML) {
+    messageDiv.innerHTML = content;
+  } else {
+    messageDiv.textContent = content;
+  }
+  
+  messages.appendChild(messageDiv);
+  messages.scrollTop = messages.scrollHeight;
+} 
